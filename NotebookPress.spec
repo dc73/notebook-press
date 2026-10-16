@@ -56,4 +56,4 @@ else:
 if sys.platform == 'darwin' and os.environ.get('NOTEBOOK_PRESS_ONEFILE') != '1':
     app = BUNDLE(collection, name='Notebook Press.app', icon=str(root / 'notebook_press' / 'assets' / 'app.icns'),
                  bundle_identifier='app.notebookpress.desktop',
-                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.2.0'})
+                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.2.1'})

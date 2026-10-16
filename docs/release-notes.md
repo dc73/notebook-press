@@ -1,6 +1,6 @@
 Notebook Press exports Jupyter notebooks and books to PDF and editable LaTeX.
 
-### New in 0.2.0
+### New in 0.2.1
 
 - A redesigned sage green workspace with a lighter sidebar, rounded controls, and clearer spacing.
 - One format selector for PDF, LaTeX, or both, plus a summary of the selected notebook and its saved figures.
