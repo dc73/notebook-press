@@ -1,7 +1,7 @@
 """Conversion engine shared by the desktop app and command line.
 
 Every export is built in a fresh staging directory, then published to a new
-directory. Notebook cells are never re-executed by this application.
+directory. Saved outputs are used unless notebook execution is requested.
 """
 
 from __future__ import annotations
@@ -39,6 +39,9 @@ class ExportRequest:
     include_code: bool = True
     paper: str = "A4"
     book_command: str = ""
+    execute: bool = False
+    python_executable: str = ""
+    execution_timeout: int = 600
 
     def validate(self) -> tuple[Path, Path, str]:
         source = Path(self.source).expanduser().resolve()
@@ -58,6 +61,10 @@ class ExportRequest:
             raise ExportError("The export destination must be a folder.")
         if kind != "notebook" and not self.include_code:
             raise ExportError("For books, control code visibility in the book configuration.")
+        if kind != "notebook" and self.execute:
+            raise ExportError("Run notebook is available for .ipynb files. Run book pages in Jupyter before exporting the book.")
+        if self.execute and (not isinstance(self.execution_timeout, int) or self.execution_timeout < 1):
+            raise ExportError("The cell timeout must be a positive number of seconds.")
         return source, destination, kind
 
 
@@ -250,6 +257,14 @@ def _notebook(request: ExportRequest, source: Path, stage: Path, log: Callable[[
         nbformat.validate(notebook)
     except Exception as error:
         raise ExportError(f"Could not read this notebook: {error}") from error
+    if request.execute:
+        from .execution import execute_notebook
+
+        notebook = execute_notebook(notebook, source, request.python_executable, request.execution_timeout, log)
+        nbformat.write(notebook, stage / "executed.ipynb")
+    elif any(cell.cell_type == "code" and cell.source.strip() and cell.get("execution_count") is None
+             and not cell.get("outputs") for cell in notebook.cells):
+        log("Some cells have no saved outputs. Enable Run notebook to generate their results and figures.")
     config = Config()
     config.TemplateExporter.exclude_input = not request.include_code
     config.TemplateExporter.exclude_input_prompt = True
@@ -415,6 +430,11 @@ def export(request: ExportRequest, log: Callable[[str], None] = print,
             _notebook(request, source, stage, log)
         else:
             _book(request, source, stage, work, kind, log)
+        if request.latex:
+            from .overleaf import prepare_overleaf
+
+            log("Preparing Overleaf project with source and figures…")
+            prepare_overleaf(stage, source.stem if source.is_file() else source.name)
         files = sorted(str(path.relative_to(stage)) for path in stage.rglob("*") if path.is_file())
         (stage / "export.json").write_text(json.dumps({
             "created_utc": datetime.now(timezone.utc).isoformat(), "source_kind": kind,

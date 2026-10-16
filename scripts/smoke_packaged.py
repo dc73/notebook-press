@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import zipfile
 
 import nbformat
 from pypdf import PdfReader
@@ -53,7 +54,31 @@ def main():
         pdf = PdfReader(result / 'notebook.pdf')
         assert 'Packaged export' in pdf.pages[0].extract_text()
         assert 'Saved output: 42' in '\n'.join(page.extract_text() for page in pdf.pages)
-        print('Packaged desktop, PDF and LaTeX export passed.')
+        assert (result / 'overleaf.zip').is_file()
+        # The app's bundled Python cannot serve as an arbitrary notebook kernel.
+        # Exercise a real external interpreter, as desktop users will select.
+        unrun = work / 'unrun.ipynb'
+        nbformat.write(nbformat.v4.new_notebook(cells=[
+            nbformat.v4.new_markdown_cell('# Generated figures'),
+            nbformat.v4.new_code_cell('import matplotlib.pyplot as plt\nplt.plot([1,2,3], [3,1,4])\nplt.title("Fresh plot")\nplt.show()\nprint("Generated result: 8")'),
+        ]), unrun)
+        original = unrun.read_bytes()
+        request.write_text(json.dumps({'source': str(unrun), 'destination': str(work / 'exports'),
+                                       'execute': True, 'python_executable': sys.executable, 'include_code': False}))
+        process = subprocess.run([str(executable), '--worker', str(request), '--events', str(events)], timeout=180)
+        rows = [json.loads(line) for line in events.read_text(encoding='utf-8').splitlines()]
+        assert process.returncode == 0 and rows[-1]['event'] == 'done', rows
+        generated = Path(rows[-1]['path'])
+        assert (generated / 'executed.ipynb').is_file()
+        assert list((generated / 'latex').rglob('*.png'))
+        with zipfile.ZipFile(generated / 'overleaf.zip') as bundle:
+            assert 'notebook.tex' in bundle.namelist()
+            assert any(name.endswith('.png') for name in bundle.namelist())
+        pdf = PdfReader(generated / 'notebook.pdf')
+        assert sum(len(page.images) for page in pdf.pages) >= 1
+        assert 'Generated result: 8' in '\n'.join(page.extract_text() for page in pdf.pages)
+        assert unrun.read_bytes() == original
+        print('Packaged desktop, saved outputs, execution, generated figures, Overleaf ZIP, PDF and LaTeX passed.')
 
 
 if __name__ == '__main__':

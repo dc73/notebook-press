@@ -1,11 +1,11 @@
 Notebook Press exports Jupyter notebooks and books to PDF and editable LaTeX.
 
-### New in 0.2.1
+### New in 0.3.0
 
-- A redesigned sage green workspace with a lighter sidebar, rounded controls, and clearer spacing.
-- One format selector for PDF, LaTeX, or both, plus a summary of the selected notebook and its saved figures.
-- A fixed export bar, collapsible logs that open automatically on errors, and restyled tool settings.
-- Scalable desktop controls on Windows, macOS, and Linux. Packaged builds now check that the desktop opens as well as testing PDF and LaTeX exports.
+- **Open in Overleaf:** LaTeX exports include a portable project ZIP and a browser handoff through Overleaf's official import API. Figure files are included. Sign in in your browser; the app does not store Overleaf credentials.
+- **Generate figures:** optionally run Python notebook cells before export using your own Python environment, including its plotting libraries and data files. Outputs are saved to a separate executed notebook; the original `.ipynb` is preserved.
+- Choose the Python interpreter and per-cell timeout. Execution errors stop the export; cancellation stops the kernel as well as the exporter.
+- Retains the sage workspace, offline math, saved-output export, and all three desktop platforms. Execution is optional and needs an external Python environment with `ipykernel` and the notebook's packages.
 
 ### Downloads
 

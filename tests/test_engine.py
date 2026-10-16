@@ -84,7 +84,8 @@ def test_pdf_and_latex_with_real_chromium(notebook, tmp_path):
     assert sum(len(page.images) for page in pdf.pages) >= 1
     assert float(pdf.pages[0].mediabox.width) == pytest.approx(595.28, abs=1)  # Chromium rounds to CSS pixels
     assert (result / "latex" / "notebook.tex").is_file()
-    assert not list(result.glob("*.html"))
+    assert not (result / "notebook.html").exists()
+    assert (result / "open-in-overleaf.html").is_file()
 
 
 def test_export_never_overwrites_previous_result(notebook, tmp_path):

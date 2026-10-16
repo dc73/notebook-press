@@ -13,7 +13,26 @@ Download the matching build from [GitHub Releases](https://github.com/dc73/noteb
 
 Release builds include Chromium, so notebook PDF export is ready without a separate browser install. For source installations and builds without Chromium, open **Settings & tools → Install PDF browser** once. Standard builds use a browser in the user cache; builds made with `--with-browser` include Chromium.
 
-Choose **PDF**, **LaTeX**, or **Both** in the format selector. The sidebar summary shows the selected notebook's cell and saved figure counts. **Show export details** opens the conversion log; errors expand it automatically. The export bar stays visible while the settings scroll.
+Choose **PDF**, **LaTeX**, or **Both** in the format selector. The notebook summary shows cell and saved figure counts. **Show export details** opens the conversion log; errors expand it automatically. The export bar stays visible while the settings scroll.
+
+### Notebooks without saved figures
+
+Enable **Run notebook to generate figures** to run all Python cells before export. Choose a Python interpreter with `ipykernel` and the notebook's packages installed, or leave the interpreter blank to auto-detect Python. For the unrun example:
+
+```sh
+python -m pip install ipykernel numpy matplotlib
+python -m notebook_press export examples/unrun-figures.ipynb -o exports --execute --cell-timeout 600
+```
+
+The selected Python runs in the original notebook's folder so relative data paths work. Cells can read or write files, as in Jupyter. The app writes the completed outputs into `executed.ipynb` in the new export folder; it does not rewrite the source notebook. An error or timeout stops the export. Cancel terminates the worker and its kernel. This option supports Python notebook files; run book pages in Jupyter before exporting a full book.
+
+### Upload to Overleaf
+
+Choose **LaTeX** or **Both**. The export includes `overleaf.zip`, with the main `.tex` file, supporting styles, and all exported figure files. Compiled PDFs and build debris are excluded; PDF figures are retained.
+
+After exporting, click **Open in Overleaf**. A local browser page shows the project and a button to **Upload project to Overleaf**. This posts the ZIP to [Overleaf's official import API](https://www.overleaf.com/devs). Sign in to Overleaf in your browser if asked. The app does not request your password, host the project, or upload anything during conversion. The ZIP import selects XeLaTeX and the main document.
+
+For manual upload, use **New project → Upload project** on Overleaf and select `overleaf.zip`. Set the compiler to **XeLaTeX** and the main document to `notebook.tex` for a notebook export, or the main document listed in `OVERLEAF-README.txt` for a book. Overleaf compiles LaTeX; it does not execute Python cells. Generate plots before uploading. Interactive widgets may need a static image export in the notebook.
 
 Each export creates a new, uniquely named folder. A notebook export contains:
 
@@ -152,7 +171,7 @@ python -m pytest -q
 xvfb-run -a python -m pytest -q
 ```
 
-The tests cover actual LaTeX and Chromium PDF exports, portable figures and attachments, saved-output preservation, code visibility, paper size, unique destinations, failure cleanup, source preservation, worker error reporting, format controls, the desktop export lifecycle, cancellation cleanup, and real Jupyter Book 1 and MyST builds. The packaged smoke test separately opens the desktop and checks the executable's PDF and LaTeX outputs.
+The tests cover actual LaTeX and Chromium PDF exports, portable figures and attachments, saved-output preservation, code visibility, paper size, unique destinations, failure cleanup, source preservation, worker error reporting, format controls, the desktop export lifecycle, cancellation cleanup, and real Jupyter Book 1 and MyST builds. Execution tests generate real plots, check relative data paths, stop on errors and timeouts, and cancel a running kernel. A browser test intercepts the Overleaf POST and validates the submitted ZIP without uploading to an account. The packaged smoke test separately opens the desktop and checks saved-output export, external Python execution, generated figures, PDF, LaTeX, and the Overleaf ZIP.
 
 See [GitHub Actions](https://github.com/dc73/notebook-press/actions) for the current Windows, macOS, and Linux build results. LaTeX PDF compilation requires an external TeX installation and is not covered by the local browser-PDF checks.
 

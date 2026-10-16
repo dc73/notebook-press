@@ -41,6 +41,7 @@ def test_desktop_latex_export(desktop, tmp_path, monkeypatch):
         assert app.process is None, "Worker did not finish"
         assert app.result, app.log.get("1.0", "end")
         assert app.status.get() == "Your export is ready."
+        assert app.overleaf_button.cget("state") == "normal"
         from pathlib import Path
         assert (Path(app.result) / "latex" / "notebook.tex").is_file()
     finally:
@@ -109,3 +110,45 @@ def test_format_selection_and_book_settings(desktop, tmp_path, selection, pdf, l
     app.source.set(str(notebook))
     assert app.code_check.cget("state") == "normal"
     assert app._request().include_code is False
+
+
+def test_cancel_execution_stops_kernel_and_cleans_export(desktop, tmp_path, monkeypatch):
+    import psutil
+
+    monkeypatch.setattr("notebook_press.app.settings_path", lambda: tmp_path / "settings.json")
+    app = desktop
+    source = tmp_path / "slow.ipynb"
+    pid_file = tmp_path / "kernel.pid"
+    nbformat.write(nbformat.v4.new_notebook(cells=[nbformat.v4.new_code_cell(
+        "import os, time\nfrom pathlib import Path\nPath('kernel.pid').write_text(str(os.getpid()))\ntime.sleep(120)"
+    )]), source)
+    before = source.read_bytes()
+    try:
+        app.source.set(str(source))
+        app.destination.set(str(tmp_path / "exports"))
+        app.want_pdf.set(False)
+        app.want_latex.set(True)
+        app.run_notebook.set(True)
+        import sys
+        app.python_executable.set(sys.executable)
+        app._start()
+        deadline = time.monotonic() + 40
+        while app.process and not pid_file.exists() and time.monotonic() < deadline:
+            app.update()
+            time.sleep(0.04)
+        assert pid_file.exists(), app.log.get("1.0", "end")
+        kernel = int(pid_file.read_text())
+        app._cancel()
+        while app.process and time.monotonic() < deadline:
+            app.update()
+            time.sleep(0.04)
+        assert app.process is None
+        assert app.status.get() == "Cancelled"
+        assert not psutil.pid_exists(kernel) or psutil.Process(kernel).status() == psutil.STATUS_ZOMBIE
+        assert list((tmp_path / "exports").iterdir()) == []
+        assert source.read_bytes() == before
+    finally:
+        if app.process:
+            app._cancel()
+            app.process.wait(timeout=10)
+        app.run_notebook.set(False)

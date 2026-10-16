@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 import tkinter as tk
+import webbrowser
 from tkinter import filedialog, messagebox
 
 from .engine import ExportError, ExportRequest, source_kind
@@ -64,6 +65,9 @@ class App(Workspace):
         self.pdf_engine = tk.StringVar(value=self.settings.get("pdf_engine", "browser"))
         self.paper = tk.StringVar(value=self.settings.get("paper", "A4"))
         self.book_command = tk.StringVar(value=self.settings.get("book_command", ""))
+        self.run_notebook = tk.BooleanVar(value=self.settings.get("execute", False))
+        self.python_executable = tk.StringVar(value=self.settings.get("python_executable", ""))
+        self.execution_timeout = tk.StringVar(value=str(self.settings.get("execution_timeout", 600)))
         self.source_detail = tk.StringVar(value="Choose a notebook or a Jupyter Book project to begin.")
         self.status = tk.StringVar(value="Ready when you are")
         self._style()
@@ -110,6 +114,8 @@ class App(Workspace):
         self.engine_picker.configure(state="disabled" if book or not self.want_pdf.get() else "normal")
         self.paper_picker.configure(state="disabled" if book else "normal")
         self.code_check.configure(state="disabled" if book else "normal")
+        self.run_check.configure(state="disabled" if book else "normal")
+        self._execution_changed(book=book)
         self._source_summary(kind)
         self.engine_hint.configure(text="Book exports use the paper, template, and PDF engine in the book configuration." if book else "Browser uses Chromium. LaTeX typesetting needs TeX.")
 
@@ -118,10 +124,15 @@ class App(Workspace):
             book = source_kind(Path(self.source.get()).expanduser()) != "notebook"
         except ExportError:
             book = False
+        try:
+            timeout = int(self.execution_timeout.get())
+        except ValueError:
+            timeout = 0
         return ExportRequest(source=self.source.get(), destination=self.destination.get(), pdf=self.want_pdf.get(),
                              latex=self.want_latex.get(), pdf_engine=self.pdf_engine.get(),
                              include_code=True if book else self.include_code.get(), paper=self.paper.get(),
-                             book_command=self.book_command.get().strip())
+                             book_command=self.book_command.get().strip(), execute=self.run_notebook.get() and not book,
+                             python_executable=self.python_executable.get().strip(), execution_timeout=timeout)
 
     def _save_settings(self):
         try:
@@ -176,6 +187,7 @@ class App(Workspace):
             return
         self._busy(True)
         self.open_button.configure(state="disabled")
+        self.overleaf_button.configure(state="disabled")
         self.progress.start()
         self.status.set("Exporting…" if request else "Installing PDF browser…")
         self.after(100, self._poll)
@@ -231,6 +243,7 @@ class App(Workspace):
                     if self.result:
                         self._append(self.result)
                         self.open_button.configure(state="normal")
+                        self.overleaf_button.configure(state="normal" if (Path(self.result) / "open-in-overleaf.html").is_file() else "disabled")
                 elif event["event"] == "error":
                     self.completed = True
                     self.status.set("Export failed — see the log for details")
@@ -263,6 +276,18 @@ class App(Workspace):
                 os.startfile(self.result)
             else:
                 subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", self.result])
+
+    def _open_overleaf(self):
+        if self.result:
+            page = Path(self.result) / "open-in-overleaf.html"
+            if page.is_file():
+                webbrowser.open(page.resolve().as_uri())
+
+    def _choose_python(self):
+        path = filedialog.askopenfilename(title="Choose your Python interpreter",
+            filetypes=[("Python executable", "*.exe"), ("All files", "*")] if os.name == "nt" else [("All files", "*")])
+        if path:
+            self.python_executable.set(path)
 
     def _close(self):
         self._save_settings()

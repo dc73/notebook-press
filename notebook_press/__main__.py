@@ -70,6 +70,9 @@ def main() -> int:
     convert.add_argument("--paper", choices=["A4", "Letter"], default="A4")
     convert.add_argument("--hide-code", action="store_true")
     convert.add_argument("--book-command", default="")
+    convert.add_argument("--execute", action="store_true", help="Run Python notebook cells before exporting")
+    convert.add_argument("--python", dest="python_executable", default="", help="Python interpreter with ipykernel and notebook libraries")
+    convert.add_argument("--cell-timeout", type=int, default=600, help="Execution timeout per cell in seconds")
     commands.add_parser("doctor", help="Show installed conversion tools")
     args = parser.parse_args()
     if args.check_desktop:
@@ -96,7 +99,8 @@ def main() -> int:
             result = export(ExportRequest(source=args.source, destination=args.output,
                                          pdf=args.format != "latex", latex=args.format != "pdf",
                                          pdf_engine=args.pdf_engine, include_code=not args.hide_code,
-                                         paper=args.paper, book_command=args.book_command))
+                                         paper=args.paper, book_command=args.book_command, execute=args.execute,
+                                         python_executable=args.python_executable, execution_timeout=args.cell_timeout))
             print(result)
             return 0
         except Exception as error:

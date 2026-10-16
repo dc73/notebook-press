@@ -7,12 +7,13 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy
 root = Path(SPECPATH)
 datas = collect_data_files('notebook_press') + collect_data_files('pypandoc') + collect_data_files('customtkinter')
 datas += [(str(Path(sys.prefix) / 'share' / 'jupyter' / 'nbconvert'), 'share/jupyter/nbconvert')]
-for package in ('nbconvert', 'nbformat', 'jupyter_core', 'jupyterlab_pygments', 'jsonschema', 'pandocfilters'):
+for package in ('nbconvert', 'nbformat', 'jupyter_core', 'jupyter_client', 'jupyterlab_pygments', 'jsonschema', 'pandocfilters'):
     datas += copy_metadata(package)
 hidden = collect_submodules('nbconvert') + collect_submodules('pygments.lexers')
 hidden += ['playwright.async_api', 'playwright.sync_api', 'playwright.__main__']
 # Pillow imports this bridge lazily when Tk loads its image extension on Linux.
 hidden += ['PIL._tkinter_finder']
+hidden += collect_submodules('jupyter_client.provisioning')
 analysis = Analysis(
     [str(root / 'launch.py')], pathex=[str(root)], binaries=[], datas=datas,
     hiddenimports=hidden, hookspath=[], hooksconfig={},
@@ -56,4 +57,4 @@ else:
 if sys.platform == 'darwin' and os.environ.get('NOTEBOOK_PRESS_ONEFILE') != '1':
     app = BUNDLE(collection, name='Notebook Press.app', icon=str(root / 'notebook_press' / 'assets' / 'app.icns'),
                  bundle_identifier='app.notebookpress.desktop',
-                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.2.1'})
+                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.3.0'})

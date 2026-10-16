@@ -160,7 +160,6 @@ class Workspace(ctk.CTk):
 
         summary = ctk.CTkFrame(middle, width=246, fg_color=SIDEBAR, corner_radius=14)
         summary.grid(row=0, column=1, sticky="nsew")
-        summary.grid_propagate(False)
         summary.grid_columnconfigure(0, weight=1)
         self._label(summary, "YOUR EXPORT", 10, True, MUTED).grid(row=0, column=0, sticky="w", padx=22, pady=(20, 12))
         self.document_name = self._label(summary, "Choose a notebook", 19, True, wraplength=202, justify="left")
@@ -170,11 +169,38 @@ class Workspace(ctk.CTk):
         ctk.CTkFrame(summary, height=1, fg_color="#D6E0D3").grid(row=3, column=0, sticky="ew", padx=22)
         self.bundle_label = self._label(summary, "", 13, wraplength=202, justify="left")
         self.bundle_label.grid(row=4, column=0, sticky="nw", padx=22, pady=12)
-        self._label(summary, "Uses saved outputs.\nNo cells are rerun.", 11, color=MUTED, justify="left").grid(row=5, column=0, sticky="sw", padx=22, pady=(0, 18))
+        self.overleaf_button = self._button(summary, "Open in Overleaf", self._open_overleaf, width=202, state="disabled")
+        self.overleaf_button.grid(row=5, column=0, padx=22, pady=(0, 8))
+        self.execution_note = self._label(summary, "Uses saved outputs.\nNo cells are rerun.", 11, color=MUTED, justify="left")
+        self.execution_note.grid(row=6, column=0, sticky="sw", padx=22, pady=(0, 18))
         summary.grid_rowconfigure(4, weight=1)
 
+        execution = self._card(body)
+        execution.grid(row=2, column=0, sticky="ew", padx=6, pady=(0, 16))
+        execution.grid_columnconfigure(0, weight=1)
+        run_row = ctk.CTkFrame(execution, fg_color="transparent")
+        run_row.grid(row=0, column=0, sticky="ew", padx=20, pady=(12, 0))
+        self._label(run_row, "Run notebook to generate figures", 15, True).pack(side="left")
+        self.run_check = ctk.CTkSwitch(run_row, text="", variable=self.run_notebook, width=46,
+            switch_width=34, switch_height=20, fg_color="#CCD5C9", progress_color=GREEN,
+            border_width=2, border_color="#B6C8B1", button_color="white", button_hover_color=BG)
+        self.run_check.pack(side="right")
+        self.run_hint = self._label(execution, "", 11, color=MUTED, wraplength=720, justify="left")
+        self.run_hint.grid(row=1, column=0, sticky="w", padx=20, pady=(0, 12))
+        self.python_row = ctk.CTkFrame(execution, fg_color="transparent")
+        self.python_row.grid(row=2, column=0, sticky="ew", padx=20, pady=(0, 16))
+        self.python_row.grid_columnconfigure(0, weight=1)
+        self._label(self.python_row, "Python interpreter (blank = auto-detect)", 11, color=MUTED).grid(row=0, column=0, sticky="w")
+        self._entry(self.python_row, self.python_executable).grid(row=1, column=0, sticky="ew", padx=(0, 8))
+        self._button(self.python_row, "Choose", self._choose_python, width=80).grid(row=1, column=1, sticky="s")
+        self._label(self.python_row, "Cell timeout (s)", 11, color=MUTED).grid(row=0, column=2, sticky="w", padx=(16, 0))
+        timeout_entry = self._entry(self.python_row, self.execution_timeout)
+        timeout_entry.configure(width=88)
+        timeout_entry.grid(row=1, column=2, sticky="s", padx=(16, 0))
+        self.run_notebook.trace_add("write", self._source_changed)
+
         destination = self._card(body)
-        destination.grid(row=2, column=0, sticky="ew", padx=6, pady=(0, 12))
+        destination.grid(row=3, column=0, sticky="ew", padx=6, pady=(0, 12))
         destination.grid_columnconfigure(0, weight=1)
         self._label(destination, "Save to", 15, True).grid(row=0, column=0, sticky="w", padx=20, pady=(12, 6))
         row = ctk.CTkFrame(destination, fg_color="transparent")
@@ -185,14 +211,14 @@ class Workspace(ctk.CTk):
 
         self.details_button = self._button(body, "Show export details", self._toggle_details, width=160, anchor="w")
         self.details_button.configure(fg_color="transparent", text_color=MUTED)
-        self.details_button.grid(row=3, column=0, sticky="w", padx=6, pady=(0, 8))
+        self.details_button.grid(row=4, column=0, sticky="w", padx=6, pady=(0, 8))
         self.log = ctk.CTkTextbox(body, height=150, fg_color=SIDEBAR, text_color=INK, corner_radius=10,
             font=("Consolas" if sys.platform == "win32" else "Menlo" if sys.platform == "darwin" else "DejaVu Sans Mono", 11),
             wrap="word", state="disabled")
-        self.log.grid(row=4, column=0, sticky="ew", padx=6, pady=(0, 14))
+        self.log.grid(row=5, column=0, sticky="ew", padx=6, pady=(0, 14))
         self.log.grid_remove()
         self.details_visible = False
-        self._append("Run and save your notebook before exporting. Each export gets its own folder.")
+        self._append("Saved outputs are used by default. Enable Run notebook to generate figures. Each export gets its own folder.")
 
         footer = ctk.CTkFrame(main, fg_color=PANEL, corner_radius=0)
         footer.grid(row=2, column=0, sticky="ew")
@@ -227,9 +253,20 @@ class Workspace(ctk.CTk):
         self.format_picker.set("Both" if pdf and latex else "PDF" if pdf else "LaTeX" if latex else "")
         self.format_hint.configure(text="A readable PDF and an editable LaTeX project." if pdf and latex else
                                    "A document ready to read and share." if pdf else "Editable source with saved figures included.")
-        self.bundle_label.configure(text=("PDF document\n\n" if pdf else "") + ("LaTeX source + figures" if latex else ""))
+        self.bundle_label.configure(text=("PDF document\n" if pdf else "") + ("LaTeX source + figures" if latex else ""))
         self.engine_choice.set("LaTeX" if self.pdf_engine.get() == "latex" else "Browser")
         self._source_changed()
+
+    def _execution_changed(self, book=False):
+        run = self.run_notebook.get() and not book
+        if run:
+            self.python_row.grid()
+        else:
+            self.python_row.grid_remove()
+        self.run_hint.configure(text="Book exports use saved outputs. Run book pages in Jupyter first." if book else
+            "Runs all cells with your Python packages. Cells can read or write files in the notebook’s folder." if run else
+            "Off: use saved outputs. Turn on for an unrun notebook or to refresh figures.")
+        self.execution_note.configure(text="Runs cells before export.\nOriginal notebook preserved." if run else "Uses saved outputs.\nNo cells are rerun.")
 
     def _source_summary(self, kind):
         path = Path(self.source.get()).expanduser()
@@ -247,8 +284,12 @@ class Workspace(ctk.CTk):
                     figures = sum(any(mime.startswith("image/") for mime in output.get("data", {}))
                                   for cell in cells for output in cell.get("outputs", []))
                     self._summary_info = f"{len(cells)} cells · {figures} saved figures"
+                    self._summary_unrun = sum(cell.get("cell_type") == "code" and bool(cell.get("source"))
+                                              and cell.get("execution_count") is None and not cell.get("outputs") for cell in cells)
                     self._summary_key = key
                 info = self._summary_info
+                if self._summary_unrun and not self.run_notebook.get():
+                    self.run_hint.configure(text=f"{self._summary_unrun} code cells have no saved outputs. Turn on to generate their results and figures.")
             except (OSError, ValueError, AttributeError, TypeError):
                 info = "Jupyter notebook"
         elif kind:
