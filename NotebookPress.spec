@@ -11,6 +11,8 @@ for package in ('nbconvert', 'nbformat', 'jupyter_core', 'jupyterlab_pygments', 
     datas += copy_metadata(package)
 hidden = collect_submodules('nbconvert') + collect_submodules('pygments.lexers')
 hidden += ['playwright.async_api', 'playwright.sync_api', 'playwright.__main__']
+# Pillow imports this bridge lazily when Tk loads its image extension on Linux.
+hidden += ['PIL._tkinter_finder']
 analysis = Analysis(
     [str(root / 'launch.py')], pathex=[str(root)], binaries=[], datas=datas,
     hiddenimports=hidden, hookspath=[], hooksconfig={},
