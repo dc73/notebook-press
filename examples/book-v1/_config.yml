@@ -1,0 +1,8 @@
+title: A Small Research Book
+author: Notebook Press
+execute:
+  execute_notebooks: 'off'
+latex:
+  latex_engine: xelatex
+  latex_documents:
+    targetname: research-book.tex

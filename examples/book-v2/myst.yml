@@ -1,0 +1,21 @@
+version: 1
+project:
+  title: A Small Research Book
+  authors:
+    - name: Notebook Press
+  toc:
+    - file: intro.md
+    - file: results.md
+  exports:
+    - format: tex
+      template: plain_latex_book
+      articles:
+        - intro.md
+        - results.md
+      output: _build/exports/research-book-latex
+    - format: pdf
+      template: plain_latex_book
+      articles:
+        - intro.md
+        - results.md
+      output: _build/exports/research-book.pdf
