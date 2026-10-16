@@ -18,9 +18,9 @@ A desktop app for **Windows, macOS, and Linux** that exports Jupyter notebooks a
 
 | Platform | Download | Open |
 | --- | --- | --- |
-| Windows | [NotebookPress.exe](https://github.com/dc73/notebook-press/releases/latest/download/NotebookPress.exe) | Double-click the single executable. |
-| macOS | [macOS app](https://github.com/dc73/notebook-press/releases/latest/download/NotebookPress-macOS.zip) | Extract and open `Notebook Press.app`. |
-| Linux | [Linux app](https://github.com/dc73/notebook-press/releases/latest/download/NotebookPress-Linux.tar.gz) | Extract and run `NotebookPress/NotebookPress`. |
+| Windows (x64) | [NotebookPress.exe](https://github.com/dc73/notebook-press/releases/latest/download/NotebookPress.exe) | Double-click the single executable. |
+| macOS (Apple Silicon) | [macOS app](https://github.com/dc73/notebook-press/releases/latest/download/NotebookPress-macOS.zip) | Extract and open `Notebook Press.app`. |
+| Linux (x64) | [Linux app](https://github.com/dc73/notebook-press/releases/latest/download/NotebookPress-Linux.tar.gz) | Extract and run `NotebookPress/NotebookPress`. |
 
 Windows needs no installer or Python setup. Release builds include the browser used for notebook PDFs and render math offline. The first Windows launch extracts the app and may take a moment. Builds are unsigned; macOS and Linux downloads appear after their native release builds finish.
 
@@ -49,8 +49,11 @@ Use Python 3.11 or later:
 
 ```sh
 python -m venv .venv
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-# macOS / Linux:      source .venv/bin/activate
+```
+
+Activate it with `.venv\Scripts\Activate.ps1` in Windows PowerShell, or `source .venv/bin/activate` on macOS / Linux. Then install and launch:
+
+```sh
 python -m pip install -e .
 python -m notebook_press --install-browser
 python -m notebook_press
