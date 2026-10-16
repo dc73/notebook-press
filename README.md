@@ -5,8 +5,8 @@
 <h1 align="center">Notebook Press</h1>
 <p align="center">From working notebooks to finished documents.</p>
 <p align="center">
-  <a href="https://github.com/dc73/notebook-press/releases/latest">Download</a> ?
-  <a href="docs/usage.md">Setup guide</a> ?
+  <a href="https://github.com/dc73/notebook-press/releases/latest">Download</a> &middot;
+  <a href="docs/usage.md">Setup guide</a> &middot;
   <a href="https://github.com/dc73/notebook-press/issues">Report an issue</a>
 </p>
 
