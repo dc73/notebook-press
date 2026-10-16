@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import unicodedata
 
 import nbformat
 from pypdf import PdfReader
@@ -64,13 +65,18 @@ def test_hidden_code_keeps_saved_outputs_and_letter_paper(notebook, tmp_path):
 
 
 def test_pdf_and_latex_with_real_chromium(notebook, tmp_path):
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import Error, sync_playwright
     with sync_playwright() as playwright:
-        if not Path(playwright.chromium.executable_path).is_file():
-            pytest.skip("Install Chromium to run the browser integration test")
+        try:
+            browser = playwright.chromium.launch()
+        except Error as error:
+            if "Executable doesn't exist" in str(error):
+                pytest.skip("Install Chromium to run the browser integration test")
+            raise
+        browser.close()
     result = export(ExportRequest(str(notebook), str(tmp_path / "out"), include_code=False), lambda _: None)
     pdf = PdfReader(result / "notebook.pdf")
-    text = "\n".join(page.extract_text() for page in pdf.pages)
+    text = unicodedata.normalize("NFKC", "\n".join(page.extract_text() for page in pdf.pages))
     assert "Export verification" in text
     assert "Saved result: 42" in text
     assert "THIS CODE MUST NEVER RUN" not in text

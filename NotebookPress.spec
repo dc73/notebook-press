@@ -22,6 +22,13 @@ if os.environ.get('NOTEBOOK_PRESS_BUNDLE_BROWSER') != '1':
     # A prior hermetic install must not silently enlarge a standard build.
     analysis.datas = [entry for entry in analysis.datas if '.local-browsers' not in entry[0]]
     analysis.binaries = [entry for entry in analysis.binaries if '.local-browsers' not in entry[0]]
+else:
+    # PDF rendering only needs the headless shell. Full Chrome contains nested
+    # macOS app bundles that cannot be individually re-signed by PyInstaller.
+    def needed(entry):
+        return '/.local-browsers/chromium-' not in entry[0].replace('\\', '/')
+    analysis.datas = [entry for entry in analysis.datas if needed(entry)]
+    analysis.binaries = [entry for entry in analysis.binaries if needed(entry)]
 pyz = PYZ(analysis.pure)
 options = dict(name='NotebookPress', debug=False, bootloader_ignore_signals=False,
                strip=False, upx=False, console=False, disable_windowed_traceback=False,
@@ -36,4 +43,4 @@ else:
 if sys.platform == 'darwin' and os.environ.get('NOTEBOOK_PRESS_ONEFILE') != '1':
     app = BUNDLE(collection, name='Notebook Press.app', icon=str(root / 'notebook_press' / 'assets' / 'app.icns'),
                  bundle_identifier='app.notebookpress.desktop',
-                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.1.0'})
+                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.1.1'})

@@ -15,6 +15,7 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from . import __version__
 from .engine import ExportError, ExportRequest, dependency_report, source_kind
 
 BG = "#F4F3EE"
@@ -113,7 +114,7 @@ class App(tk.Tk):
         tk.Frame(sidebar, height=1, bg="#40534B").pack(fill="x", padx=25, pady=12)
         tk.Label(sidebar, text="01   Choose source\n\n02   Set your formats\n\n03   Export & share", justify="left", fg="#D4DFD7", bg=INK).pack(anchor="w", padx=25, pady=16)
         tk.Button(sidebar, text="Setup & tools  ↗", command=self._setup, bg="#32483F", fg="white", activebackground=GREEN, activeforeground="white", relief="flat", padx=12, pady=10, cursor="hand2").pack(side="bottom", fill="x", padx=20, pady=(10, 28))
-        tk.Label(sidebar, text="WINDOWS · MAC · LINUX\nv0.1.0", justify="left", fg="#9AAFA4", bg=INK, font=("Helvetica", 8)).pack(side="bottom", anchor="w", padx=25, pady=10)
+        tk.Label(sidebar, text=f"WINDOWS · MAC · LINUX\nv{__version__}", justify="left", fg="#9AAFA4", bg=INK, font=("Helvetica", 8)).pack(side="bottom", anchor="w", padx=25, pady=10)
         main = ttk.Frame(self, padding=(30, 26))
         main.pack(side="left", fill="both", expand=True)
         ttk.Label(main, text="THE EXPORT DESK", style="Muted.TLabel", font=("Helvetica", 9, "bold")).pack(anchor="w")

@@ -18,7 +18,7 @@ def main():
         env["NOTEBOOK_PRESS_ONEFILE"] = "1"
     if args.with_browser:
         env["PLAYWRIGHT_BROWSERS_PATH"] = "0"
-        subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], env=env, check=True)
+        subprocess.run([sys.executable, "-m", "playwright", "install", "--only-shell", "chromium"], env=env, check=True)
         env["NOTEBOOK_PRESS_BUNDLE_BROWSER"] = "1"
     subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", str(root / "NotebookPress.spec")],
                    cwd=root, env=env, check=True)

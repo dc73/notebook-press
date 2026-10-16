@@ -108,11 +108,11 @@ def dependency_report() -> list[tuple[str, bool, str]]:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as playwright:
-            browser = Path(playwright.chromium.executable_path)
-            ready = browser.is_file()
-        report.append(("Chromium", ready, str(browser) if ready else "Use Install PDF browser below"))
+            browser = playwright.chromium.launch(timeout=15000)
+            browser.close()
+        report.append(("Chromium", True, "Headless PDF browser is ready"))
     except Exception as error:
-        report.append(("Chromium", False, str(error)))
+        report.append(("Chromium", False, "Use Install PDF browser below. " + str(error).splitlines()[0]))
     for tool, label in (("xelatex", "XeLaTeX (optional)"), ("latexmk", "latexmk (book PDF)"),
                         ("jupyter-book", "Jupyter Book 1 (optional)"), ("myst", "MyST / Book 2 (optional)")):
         path = find_tool(tool)
