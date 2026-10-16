@@ -14,7 +14,7 @@ import nbformat
 from pypdf import PdfReader
 import pytest
 
-from notebook_press.engine import ExportError, ExportRequest, export, find_tool, source_kind
+from notebook_press.engine import ExportError, ExportRequest, export, external_environment, find_tool, source_kind
 
 PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=")
 
@@ -171,3 +171,18 @@ def test_book_detection():
     root = Path(__file__).parent.parent / "examples"
     assert source_kind(root / "book-v1") == "book-v1"
     assert source_kind(root / "book-v2") == "book-v2"
+
+
+@pytest.mark.parametrize("original", [None, "/system/library/path"])
+def test_frozen_linux_tools_do_not_inherit_python_library_paths(monkeypatch, original):
+    monkeypatch.setattr(sys, "platform", "linux")
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/frozen/app/libraries")
+    if original is None:
+        monkeypatch.delenv("LD_LIBRARY_PATH_ORIG", raising=False)
+    else:
+        monkeypatch.setenv("LD_LIBRARY_PATH_ORIG", original)
+    environment = external_environment()
+    assert environment.get("LD_LIBRARY_PATH") == original
+    import os
+    assert os.environ["LD_LIBRARY_PATH"] == "/frozen/app/libraries"

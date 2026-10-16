@@ -83,6 +83,18 @@ def find_tool(name: str) -> str | None:
     return shutil.which(name)
 
 
+def external_environment() -> dict[str, str]:
+    """Use system library paths for independently shipped publishing tools."""
+    environment = os.environ.copy()
+    if getattr(sys, "frozen", False) and sys.platform.startswith("linux"):
+        original = environment.get("LD_LIBRARY_PATH_ORIG")
+        if original is None:
+            environment.pop("LD_LIBRARY_PATH", None)
+        else:
+            environment["LD_LIBRARY_PATH"] = original
+    return environment
+
+
 def configure_pandoc() -> str:
     import pypandoc
 
@@ -108,7 +120,7 @@ def dependency_report() -> list[tuple[str, bool, str]]:
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(timeout=15000)
+            browser = playwright.chromium.launch(timeout=15000, env=external_environment())
             browser.close()
         report.append(("Chromium", True, "Headless PDF browser is ready"))
     except Exception as error:
@@ -122,7 +134,7 @@ def dependency_report() -> list[tuple[str, bool, str]]:
 
 def _command(command: list[str], cwd: Path, log: Callable[[str], None]) -> None:
     log("Running: " + subprocess.list2cmdline(command))
-    env = os.environ.copy()
+    env = external_environment()
     env.update({"PYTHONIOENCODING": "utf-8", "NO_COLOR": "1", "FORCE_COLOR": "0"})
     with subprocess.Popen(command, cwd=cwd, env=env, stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace",
@@ -193,7 +205,7 @@ async def _browser_pdf(html: str, target: Path, paper: str, base: Path) -> None:
 
     async with async_playwright() as playwright:
         try:
-            browser = await playwright.chromium.launch(args=["--allow-file-access-from-files"])
+            browser = await playwright.chromium.launch(args=["--allow-file-access-from-files"], env=external_environment())
         except Exception as error:
             raise ExportError("PDF browser could not start. Open Setup and install the PDF browser.\n" + str(error)) from error
         try:
@@ -257,6 +269,7 @@ def _notebook(request: ExportRequest, source: Path, stage: Path, log: Callable[[
             # windowed Windows executables, which have no inherited console.
             process = subprocess.run([pandoc, "-f", from_format, "-t", to_format, *(extra_args or [])],
                                      input=text, capture_output=True, encoding="utf-8", errors="replace",
+                                     env=external_environment(),
                                      creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
             if process.returncode or not process.stdout.strip():
                 raise ExportError("Pandoc could not convert this notebook:\n" + (process.stderr or f"exit {process.returncode}"))

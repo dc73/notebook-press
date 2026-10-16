@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "notebook-press"
-version = "0.1.1"
+version = "0.1.2"
 description = "A Windows, macOS and Linux desktop exporter for Jupyter notebooks and books"
 authors = [{name = "dc73"}]
 requires-python = ">=3.11"

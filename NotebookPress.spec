@@ -29,6 +29,17 @@ else:
         return '/.local-browsers/chromium-' not in entry[0].replace('\\', '/')
     analysis.datas = [entry for entry in analysis.datas if needed(entry)]
     analysis.binaries = [entry for entry in analysis.binaries if needed(entry)]
+if sys.platform == 'darwin':
+    # These independently distributed tools already have valid relative dylib
+    # paths and signatures. Keep their bytes intact instead of rewriting them
+    # as Python extension dependencies (Chrome's dylib headers have no padding).
+    def external_program(entry):
+        name = entry[0].replace('\\', '/')
+        return name.startswith(('playwright/driver/', 'pypandoc/files/'))
+    analysis.datas += [(destination, source, 'DATA')
+                       for destination, source, kind in analysis.binaries
+                       if external_program((destination, source, kind))]
+    analysis.binaries = [entry for entry in analysis.binaries if not external_program(entry)]
 pyz = PYZ(analysis.pure)
 options = dict(name='NotebookPress', debug=False, bootloader_ignore_signals=False,
                strip=False, upx=False, console=False, disable_windowed_traceback=False,
@@ -43,4 +54,4 @@ else:
 if sys.platform == 'darwin' and os.environ.get('NOTEBOOK_PRESS_ONEFILE') != '1':
     app = BUNDLE(collection, name='Notebook Press.app', icon=str(root / 'notebook_press' / 'assets' / 'app.icns'),
                  bundle_identifier='app.notebookpress.desktop',
-                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.1.1'})
+                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.1.2'})

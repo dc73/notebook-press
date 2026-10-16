@@ -41,6 +41,8 @@ jobs:
         if: runner.os != 'Windows'
         run: python scripts/build.py --with-browser
       - name: Smoke-test packaged notebook PDF and LaTeX
+        env:
+          DEBUG: pw:browser
         run: python scripts/smoke_packaged.py
       - name: Archive macOS application
         if: runner.os == 'macOS'
