@@ -1,6 +1,6 @@
 # Notebook Press
 
-A native desktop app for **Windows, Linux, and macOS** that turns Jupyter notebooks and Jupyter Books into **PDF** and **LaTeX with supporting figures**. Built with Python and Tk, with real conversion through nbconvert, Chromium, and the official book engines.
+A native desktop app for **Windows, Linux, and macOS** that turns Jupyter notebooks and Jupyter Books into **PDF** and **LaTeX with supporting figures**. Built with Python and CustomTkinter, with real conversion through nbconvert, Chromium, and the official book engines.
 
 ## Open the app
 
@@ -11,7 +11,9 @@ Download the matching build from [GitHub Releases](https://github.com/dc73/noteb
 3. Choose a destination and click **Export documents**.
 4. Click **Open export folder** when the export is ready.
 
-Release builds include Chromium, so notebook PDF export is ready without a separate browser install. For source installations and builds without Chromium, open **Setup & tools → Install PDF browser** once. Standard builds use a browser in the user cache; builds made with `--with-browser` include Chromium.
+Release builds include Chromium, so notebook PDF export is ready without a separate browser install. For source installations and builds without Chromium, open **Settings & tools → Install PDF browser** once. Standard builds use a browser in the user cache; builds made with `--with-browser` include Chromium.
+
+Choose **PDF**, **LaTeX**, or **Both** in the format selector. The sidebar summary shows the selected notebook's cell and saved figure counts. **Show export details** opens the conversion log; errors expand it automatically. The export bar stays visible while the settings scroll.
 
 Each export creates a new, uniquely named folder. A notebook export contains:
 
@@ -109,7 +111,7 @@ Define `project.exports` with `format: tex` and/or `format: pdf`, the desired te
 
 The app runs `myst build --pdf`, `myst build --tex`, or both, honoring configured templates and article order. It preserves the complete `_build/exports` tree under `book-exports/`. Code is not re-executed. Book paper size, PDF engine, and code visibility are controlled by the book configuration, rather than notebook options.
 
-If a packaged app cannot find a book engine on PATH, put the full `jupyter-book` or `myst` executable path in **Setup & tools → Book engine**. This field is a single executable path, not a shell command.
+If a packaged app cannot find a book engine on PATH, put the full `jupyter-book` or `myst` executable path in **Settings & tools → Book engine executable**. This field is a single executable path, not a shell command.
 
 ## Command line
 
@@ -150,7 +152,7 @@ python -m pytest -q
 xvfb-run -a python -m pytest -q
 ```
 
-The tests cover actual LaTeX and Chromium PDF exports, portable figures and attachments, saved-output preservation, code visibility, paper size, unique destinations, failure cleanup, source preservation, worker error reporting, the desktop export lifecycle, cancellation cleanup, and real Jupyter Book 1 and MyST builds. The packaged smoke test separately checks the executable's PDF and LaTeX outputs.
+The tests cover actual LaTeX and Chromium PDF exports, portable figures and attachments, saved-output preservation, code visibility, paper size, unique destinations, failure cleanup, source preservation, worker error reporting, format controls, the desktop export lifecycle, cancellation cleanup, and real Jupyter Book 1 and MyST builds. The packaged smoke test separately opens the desktop and checks the executable's PDF and LaTeX outputs.
 
 See [GitHub Actions](https://github.com/dc73/notebook-press/actions) for the current Windows, macOS, and Linux build results. LaTeX PDF compilation requires an external TeX installation and is not covered by the local browser-PDF checks.
 

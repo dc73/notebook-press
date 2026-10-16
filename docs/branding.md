@@ -1,6 +1,6 @@
 # Notebook Press identity
 
-The logo combines a geometric **N** with folded book pages. Ivory and sage sit on a forest green field, matching the desktop interface.
+The logo combines a geometric **N** with folded book pages. Ivory and sage sit on a forest green field. The desktop uses a pale sage sidebar, white surfaces, and deeper sage actions.
 
 - Original: [`logo.png`](../notebook_press/assets/logo.png)
 - Windows: [`app.ico`](../notebook_press/assets/app.ico)
