@@ -59,6 +59,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Export Jupyter notebooks and books to PDF and LaTeX.")
     parser.add_argument("--worker", metavar="REQUEST", help=argparse.SUPPRESS)
     parser.add_argument("--events", help=argparse.SUPPRESS)
+    parser.add_argument("--check-desktop", metavar="RESULT", help=argparse.SUPPRESS)
     parser.add_argument("--install-browser", action="store_true", help="Install Chromium for notebook PDFs")
     commands = parser.add_subparsers(dest="command")
     convert = commands.add_parser("export", help="Export without opening the desktop app")
@@ -71,6 +72,17 @@ def main() -> int:
     convert.add_argument("--book-command", default="")
     commands.add_parser("doctor", help="Show installed conversion tools")
     args = parser.parse_args()
+    if args.check_desktop:
+        # Exercise bundled themes, fonts, images and Tk, not just worker imports.
+        from .app import App
+
+        app = App()
+        try:
+            app.update()
+            Path(args.check_desktop).write_text(json.dumps({"desktop": "ready"}), encoding="utf-8")
+        finally:
+            app.destroy()
+        return 0
     if args.worker or (args.install_browser and args.events):
         return worker(args.worker, args.events, args.install_browser)
     if args.install_browser:

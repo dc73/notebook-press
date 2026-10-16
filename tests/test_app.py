@@ -3,6 +3,7 @@
 import time
 import tkinter as tk
 
+import customtkinter as ctk
 import nbformat
 import pytest
 
@@ -75,3 +76,36 @@ def test_cancel_cleans_the_job_workspace(desktop, tmp_path, monkeypatch):
         if app.process:
             app._cancel()
             app.process.wait(timeout=10)
+
+
+@pytest.mark.parametrize("selection,pdf,latex", [("PDF", True, False), ("LaTeX", False, True), ("Both", True, True)])
+def test_format_selection_and_book_settings(desktop, tmp_path, selection, pdf, latex):
+    app = desktop
+    notebook = tmp_path / "selected.ipynb"
+    nbformat.write(nbformat.v4.new_notebook(), notebook)
+    app.source.set(str(notebook))
+    app._set_format(selection)
+    request = app._request()
+    assert (request.pdf, request.latex) == (pdf, latex)
+    assert app.engine_picker.cget("state") == ("normal" if pdf else "disabled")
+    letter = next(child for child in app.paper_picker.winfo_children()
+                  if isinstance(child, ctk.CTkButton) and child.cget("text") == "Letter")
+    letter.invoke()
+    assert app._request().paper == "Letter", "Paper size also applies to standalone LaTeX"
+    app.include_code.set(False)
+    book = tmp_path / "book"
+    book.mkdir()
+    (book / "_config.yml").write_text("title: My book\n")
+    (book / "_toc.yml").write_text("format: jb-book\nroot: intro\n")
+    app.source.set(str(book))
+    assert app.engine_picker.cget("state") == "disabled"
+    paper_buttons = [child for child in app.paper_picker.winfo_children() if isinstance(child, ctk.CTkButton)]
+    app.paper.set("A4")
+    for button in paper_buttons:
+        button.invoke()
+    assert app.paper.get() == "A4", "Book paper controls must not override the project configuration"
+    assert app.code_check.cget("state") == "disabled"
+    assert app._request().include_code is True
+    app.source.set(str(notebook))
+    assert app.code_check.cget("state") == "normal"
+    assert app._request().include_code is False

@@ -14,6 +14,8 @@ A desktop app for **Windows, macOS, and Linux** that exports Jupyter notebooks a
 
 ![Notebook Press desktop](preview.png)
 
+A quiet sage workspace with rounded controls, a notebook summary, and a single PDF / LaTeX format selector. Export details stay tucked away until you need them; the export action stays visible as you scroll.
+
 ## Download
 
 | Platform | Download | Open |

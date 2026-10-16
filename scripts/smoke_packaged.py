@@ -2,7 +2,9 @@
 
 import argparse
 import json
+import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -26,6 +28,14 @@ def main():
         executable = root / 'dist' / 'NotebookPress' / ('NotebookPress.exe' if sys.platform == 'win32' else 'NotebookPress')
     with tempfile.TemporaryDirectory(prefix='notebook-press-smoke-') as temporary:
         work = Path(temporary)
+        desktop_result = work / 'desktop.json'
+        desktop_command = [str(executable), '--check-desktop', str(desktop_result)]
+        if sys.platform.startswith('linux') and not os.environ.get('DISPLAY'):
+            assert shutil.which('xvfb-run'), 'Install Xvfb for the packaged desktop check.'
+            desktop_command = ['xvfb-run', '-a', *desktop_command]
+        desktop = subprocess.run(desktop_command, timeout=120)
+        assert desktop.returncode == 0 and desktop_result.is_file(), 'Packaged desktop did not open'
+        assert json.loads(desktop_result.read_text()) == {'desktop': 'ready'}
         source = work / 'sample.ipynb'
         nbformat.write(nbformat.v4.new_notebook(cells=[
             nbformat.v4.new_markdown_cell('# Packaged export\n\nA formula: $E=mc^2$.'),
@@ -43,7 +53,7 @@ def main():
         pdf = PdfReader(result / 'notebook.pdf')
         assert 'Packaged export' in pdf.pages[0].extract_text()
         assert 'Saved output: 42' in '\n'.join(page.extract_text() for page in pdf.pages)
-        print('Packaged PDF and LaTeX export passed.')
+        print('Packaged desktop, PDF and LaTeX export passed.')
 
 
 if __name__ == '__main__':

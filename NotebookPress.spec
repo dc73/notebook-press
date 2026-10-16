@@ -5,7 +5,7 @@ import sys
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
 
 root = Path(SPECPATH)
-datas = collect_data_files('notebook_press') + collect_data_files('pypandoc')
+datas = collect_data_files('notebook_press') + collect_data_files('pypandoc') + collect_data_files('customtkinter')
 datas += [(str(Path(sys.prefix) / 'share' / 'jupyter' / 'nbconvert'), 'share/jupyter/nbconvert')]
 for package in ('nbconvert', 'nbformat', 'jupyter_core', 'jupyterlab_pygments', 'jsonschema', 'pandocfilters'):
     datas += copy_metadata(package)
@@ -54,4 +54,4 @@ else:
 if sys.platform == 'darwin' and os.environ.get('NOTEBOOK_PRESS_ONEFILE') != '1':
     app = BUNDLE(collection, name='Notebook Press.app', icon=str(root / 'notebook_press' / 'assets' / 'app.icns'),
                  bundle_identifier='app.notebookpress.desktop',
-                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.1.2'})
+                 info_plist={'NSHighResolutionCapable': True, 'CFBundleShortVersionString': '0.2.0'})

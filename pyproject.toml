@@ -4,11 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "notebook-press"
-version = "0.1.2"
+version = "0.2.0"
 description = "A Windows, macOS and Linux desktop exporter for Jupyter notebooks and books"
 authors = [{name = "dc73"}]
 requires-python = ">=3.11"
 dependencies = [
+  "customtkinter>=5.2,<6",
+  "Pillow>=11,<13",
   "nbconvert[webpdf]>=7.16,<8",
   "pypandoc-binary>=1.13,<2",
   "PyYAML>=6,<7",
@@ -16,7 +18,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10", "pypdf>=5,<7", "pyinstaller>=6,<7", "Pillow>=11,<13"]
+dev = ["pytest>=8,<10", "pypdf>=5,<7", "pyinstaller>=6,<7"]
 book-v1 = ["jupyter-book>=1.0,<2"]
 book-v2 = ["mystmd>=1.3,<2"]
 
